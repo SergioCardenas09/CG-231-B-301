@@ -1,58 +1,148 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Ejemplo de cámara ortográfica</title>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <title>Vista con Camara Ortografica</title>
     <style>
-        body { margin: 0; }
-        canvas { width: 100%; height: 100%; }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      #text {
+        position: absolute;
+        padding: 10px;
+        width: 100%;
+        text-align: left;
+        color: #000000;
+      }
     </style>
-</head>
-<body>
-    <script src="https://cdn.rawgit.com/mrdoob/three.js/r129/build/three.min.js"></script>
-    <script src="https://cdn.rawgit.com/mrdoob/three.js/r129/examples/js/controls/OrbitControls.js"></script>
-    <script>
-        // Crear la escena
-        var scene = new THREE.Scene();
+  </head>
+  <body>
+    <div></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r94/three.min.js"></script>
+    <script type="module">
+      import { OrbitControls } from 'https://unpkg.com/three@0.126.1/examples/jsm/controls/OrbitControls';
 
-        // Crear la cámara ortográfica
-        var camera = new THREE.OrthographicCamera(
-            window.innerWidth / - 2, // Izquierda
-            window.innerWidth / 2, // Derecha
-            window.innerHeight / 2, // Arriba
-            window.innerHeight / - 2, // Abajo
-            1, // Distancia mínima de visión
-            1000 // Distancia máxima de visión
-        );
+      //funcion de geometria para la piramide
 
-        // Configurar la posición de la cámara
-        camera.position.set(0, 0, 5);
+      function Geometria(vertices) {
+        let geom = new THREE.Geometry();
+        for (let i = 0; i < vertices.length; ++i) {
+          let x = vertices[i][0];
+          let y = vertices[i][1];
+          let z = vertices[i][2];
+          let vector = new THREE.Vector3(x, y, z);
+          geom.vertices.push(vector);
+        }
+        return geom;
+      }
 
-        // Crear el renderizador
-        var renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+
+      // Colores posibles para las piramides
+      let color = [
+        { color: 0xD63714 },
+        { color: 0xD63714 },
+        { color: 0xD63714 },
+      ];
+
+      //geometria para las piramides
+
+      let lado = 40; //lado de la base de la piramide
+
+      let h = 50; //altura de la piramide
+
+      //vertices de la piramide 
+      let v1 = [0, 0, 0];
+      let v2 = [lado, 0, 0];
+      let v3 = [lado, 0, lado];
+      let v4 = [0, 0, lado];
+      let v5 = [lado / 2, h, lado / 2];
+      let vertices = [v1, v2, v3, v4, v5, v1, v4, v3, v5, v2];
+      let geom = Geometria(vertices);
+
+      //materiales para las piramides
+      let material = [];
+      for (let i = 0; i < 2; i++) {
+        material.push(new THREE.LineBasicMaterial(color[i]));
+      }
+      // Figuras paras las piramides
+      let fig = [];
+      for (let i = 0; i < 2; i++) {
+        fig.push(new THREE.Line(geom, material[i]));
+      }
+      //Escena 
+      let scene = new THREE.Scene();
+
+      //Cámara ortografica
+      let camera = new THREE.OrthographicCamera(
+        window.innerWidth / -6,
+        window.innerWidth / 6,
+        window.innerHeight / 6,
+        window.innerHeight / -6,
+        1,
+        1000
+      );
+
+      //renderizador
+      let renderer = new THREE.WebGLRenderer();
+      renderer.setClearColor(0x000000, 1.0);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+      //Parámetros neesarios para la Escena
+        let size = 700;
+        let arrowSize = 40;
+        let divisions = 20;
+        let origin = new THREE.Vector3(0, 0, 0);
+        let x = new THREE.Vector3(1, 0, 0);
+        let y = new THREE.Vector3(0, 1, 0);
+        let z = new THREE.Vector3(0, 0, 1);
+        let color2 = new THREE.Color(0x333333);
+        let colorR = new THREE.Color(0xAA0000);
+        let colorG = new THREE.Color(0x00AA00);
+        let colorB = new THREE.Color(0x0000AA);
+
+       //Control Espacio 3D
+        let controls = new OrbitControls(camera, renderer.domElement);
+
+        //Crear la Grilla plano xz
+        var gridHelperXZ = new THREE.GridHelper( size, divisions, color2, color2);
+
+        //Flechas
+        var arrowX = new THREE.ArrowHelper( x, origin, arrowSize, colorR );
+        var arrowY = new THREE.ArrowHelper( y, origin, arrowSize, colorG );
+        var arrowZ = new THREE.ArrowHelper( z, origin, arrowSize, colorB );
+
+        //Posición cámara
+        camera.position.x = 300;
+        camera.position.y = 300;
+        camera.position.z = 300;
+
+        camera.lookAt(scene.position);
+
+
         document.body.appendChild(renderer.domElement);
 
-        // Crear una geometría y un material
-        var geometry = new THREE.BoxGeometry();
-        var material = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+        //Agregamos obejetos a la escena
+        scene.add(gridHelperXZ);
+        scene.add(arrowX);	
+        scene.add(arrowY);	
+        scene.add(arrowZ);
 
-        // Crear un objeto mesh y agregarlo a la escena
-        var edges = new THREE.EdgesGeometry(geometry);
-        var cube = new THREE.LineSegments(edges, material);
-        scene.add(cube);
-
-        // Agregar los controles de órbita
-        var controls = new THREE.OrbitControls(camera, renderer.domElement);
-
-        // Renderizar la escena con la cámara
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
-            controls.update();
+        //agregamos tambien la piramide
+        for(let i = 0; i < 2; i++) {
+        scene.add(fig[i]);
         }
-        animate();
 
-    </script>
-</body>
-</html>
+        //Animación del OrbitControls y se colocan todos los objetos en escena
+        function render() {
+        requestAnimationFrame(render);
+        controls.update();
+        renderer.render(scene, camera);
+        }
+
+        render();
+        </script>
+        </body>
+        </html>
